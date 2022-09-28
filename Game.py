@@ -1,12 +1,16 @@
 import tkinter as tk
 from tkinter import messagebox
+import numpy as np
 import random
 
 class Minesweeper(tk.Frame):
+    element = {"MINE":0, "CLICK":1}
+
     def __init__(self, master):
         super(Minesweeper, self).__init__(master)
         self.width = 360
         self.height = 360
+        self.square = 40
         self.canvas = tk.Canvas(self, bg='#a6b1fd',
                                 width = self.width,
                                 height = self.height)
@@ -18,52 +22,44 @@ class Minesweeper(tk.Frame):
         self.canvas.bind('<Button-1>', self.left_click)
         self.canvas.bind('<Button-2>', self.right_click)  
 
-    def setup_9x9(self):
-        self.width = 360
-        self.height = 360
-        self.canvas.config(width = self.width,
-                            height = self.height)
+    def setup_game(self, row, col):
+        self.row = row
+        self.col = col
+        self.width = self.col * self.square
+        self.height = self.row * self.square
+
+        self.canvas.config(width = self.width, height = self.height)
         self.canvas.pack()
         self.pack()
+
+        for i in range(self.col+1):
+            self.canvas.create_line(i*self.square,0,i*self.square,self.height,fill='black')
+        for i in range(self.row+1):
+            self.canvas.create_line(0,i*self.square,self.width,i*self.square,fill='black')
+
+        self.pattern = np.arange(self.col * self.row * 3).reshape(self.col, self.row, 3)
+
         
-        for i in range(10):
-            self.canvas.create_line(i*40,0,i*40,360,fill='black')
-            self.canvas.create_line(0,i*40,360,i*40,fill='black')
-          
+    
+    def setup_9x9(self):
+        self.setup_game(9, 9)
+        self.mine = 10
 
     def setup_16x16(self):
-        self.width = 640
-        self.height = 640
-        self.canvas.config(width = self.width,
-                            height = self.height)
-        self.canvas.pack()
-        self.pack()
-        
-        for i in range(17):
-            self.canvas.create_line(i*40,0,i*40,640,fill='black')
-            self.canvas.create_line(0,i*40,640,i*40,fill='black')
-        
-    def setup_30x16(self):
-        self.canvas.delete("all")
-        self.width = 1200
-        self.height = 640
-        self.canvas.config(width = self.width,
-                            height = self.height)
-        self.canvas.pack()
-        self.pack()
-        
-        for i in range(31):
-            self.canvas.create_line(i*40,0,i*40,640,fill='black')
-        for i in range(17):
-            self.canvas.create_line(0,i*40,1200,i*40,fill='black')
+        self.setup_game(16, 16)
+        self.mine = 40
 
+    def setup_30x16(self):
+        self.setup_game(16, 30)
+        self.mine = 99
 
     def left_click(self, event):
-        x = event.x
-        y = event.y
+        x = event.x//self.square
+        y = event.y//self.square
+
     def right_click(self, event):  
-        x = event.x
-        y = event.y
+        x = event.x//self.square
+        y = event.y//self.square
 
 
 if __name__ == '__main__':
