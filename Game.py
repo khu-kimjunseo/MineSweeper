@@ -52,14 +52,14 @@ class Minesweeper(tk.Frame):
             # Cheat code
             # self.canvas.create_text((i+0.5)*self.square, (j+0.5)*self.square, text = 'O', fill = 'green', font = ('Helvetica', 40), tags = 'bomb')
         
-        for i in range(col):
-            for j in range(row):
+        for i in range(self.col):
+            for j in range(self.row):
                 if self.pattern[i][j][Minesweeper.element["MINE"]] == -1: continue
                 count = 0
                 for xx in range(-1, 2):
-                    if i+xx < 0 or i+xx >= row: continue    
+                    if i+xx < 0 or i+xx >= self.col: continue    
                     for yy in range(-1, 2):
-                        if j+yy < 0 or j+yy >= col: continue
+                        if j+yy < 0 or j+yy >= self.row: continue
                         if self.pattern[i+xx][j+yy][Minesweeper.element["MINE"]] == -1:
                             count += 1
                 self.pattern[i][j][Minesweeper.element["MINE"]] = count
@@ -110,7 +110,7 @@ class Minesweeper(tk.Frame):
         y = event.y//self.square
         if self.pattern[x][y][Minesweeper.element["MINE"]] == -1:
             messagebox.showinfo('BOMB', 'BOMB!')
-            self.setup_game(self.row, self.col)
+            self.setup_game(self.col, self.row)
         else:
             self.detect_region(x, y)
         self.check_win()
