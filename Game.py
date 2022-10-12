@@ -20,15 +20,12 @@ class Minesweeper(tk.Frame):
 
         self.setup_9x9()
         self.canvas.focus_set()
-        self.canvas.bind('<Button-1>', self.left_click)
-        self.canvas.bind('<Button-2>', self.right_click)  
+        
+    def setup_game(self, col, row):
+        self.canvas.delete('all')
 
-    def setup_game(self, row, col):
-        # Cheat code
-        self.canvas.delete('bomb')
-
-        self.row = row
         self.col = col
+        self.row = row
         self.width = self.col * self.square
         self.height = self.row * self.square
 
@@ -41,7 +38,8 @@ class Minesweeper(tk.Frame):
         for i in range(self.row+1):
             self.canvas.create_line(0,i*self.square,self.width,i*self.square,fill='black')
 
-        self.pattern = np.zeros(self.col * self.row * 3, dtype = 'int32').reshape(self.col, self.row, 3)
+        self.pattern = np.zeros(self.col * self.row * 2, dtype = 'int32').reshape(self.col, self.row, 2)
+
 
         # Create mine
         for _ in range(self.mine):
@@ -50,22 +48,62 @@ class Minesweeper(tk.Frame):
             while self.pattern[i][j][Minesweeper.element["MINE"]] == -1:       
                 i = random.randint(0, self.col-1)
                 j = random.randint(0, self.row-1)
-            
             self.pattern[i][j][Minesweeper.element["MINE"]] = -1  
             # Cheat code
-            self.canvas.create_text((i+0.5)*self.square, (j+0.5)*self.square, text = 'O', fill = 'black', font = ('Helvetica', 40), tags = 'bomb')
-    
+            # self.canvas.create_text((i+0.5)*self.square, (j+0.5)*self.square, text = 'O', fill = 'green', font = ('Helvetica', 40), tags = 'bomb')
+        
+        for i in range(col):
+            for j in range(row):
+                if self.pattern[i][j][Minesweeper.element["MINE"]] == -1: continue
+                count = 0
+                for xx in range(-1, 2):
+                    if i+xx < 0 or i+xx >= row: continue    
+                    for yy in range(-1, 2):
+                        if j+yy < 0 or j+yy >= col: continue
+                        if self.pattern[i+xx][j+yy][Minesweeper.element["MINE"]] == -1:
+                            count += 1
+                self.pattern[i][j][Minesweeper.element["MINE"]] = count
+
     def setup_9x9(self):
         self.mine = 10
+        self.canvas.bind('<Button-1>', self.left_click)
+        self.canvas.bind('<Button-2>', self.right_click)  
         self.setup_game(9, 9)
 
     def setup_16x16(self):
         self.mine = 40
+        self.canvas.bind('<Button-1>', self.left_click)
+        self.canvas.bind('<Button-2>', self.right_click)  
         self.setup_game(16, 16)
 
     def setup_30x16(self):
         self.mine = 99
-        self.setup_game(16, 30)
+        self.canvas.bind('<Button-1>', self.left_click)
+        self.canvas.bind('<Button-2>', self.right_click)  
+        self.setup_game(30, 16)
+     
+    def check_win(self):
+        bIsWin = True
+        for i in range(self.col):
+            if bIsWin == True:
+                for j in range(self.row):
+                    if self.pattern[i][j][Minesweeper.element["CLICK"]] == Minesweeper.click["NON"]:
+                        bIsWin = False
+                        break
+                    if self.pattern[i][j][Minesweeper.element["MINE"]] == -1:
+                        if self.pattern[i][j][Minesweeper.element["CLICK"]] != Minesweeper.click["RIGHT"]:
+                            bIsWin = False
+                            break
+                    else:
+                        if self.pattern[i][j][Minesweeper.element["CLICK"]] == Minesweeper.click["RIGHT"]:
+                            bIsWin = False
+                            break
+            else:
+                break
+        if bIsWin is True:
+            self.canvas.unbind('<Button-1>')
+            self.canvas.unbind('<Button-2>')  
+            messagebox.showinfo('WIN', ' YOU WIN!')
 
     def left_click(self, event):
         x = event.x//self.square
@@ -74,7 +112,9 @@ class Minesweeper(tk.Frame):
             messagebox.showinfo('BOMB', 'BOMB!')
             self.setup_game(self.row, self.col)
         else:
-            self.detect_region(x, y)                
+            self.detect_region(x, y)
+        self.check_win()
+        
 
     def right_click(self, event):  
         x = event.x//self.square
@@ -85,11 +125,21 @@ class Minesweeper(tk.Frame):
         elif self.pattern[x][y][Minesweeper.element["CLICK"]] == Minesweeper.click["RIGHT"]:
             self.canvas.delete('[{},{}]'.format(x,y))
             self.pattern[x][y][Minesweeper.element["CLICK"]] = Minesweeper.click["NON"]
+        self.check_win()
         
     def detect_region(self, x, y):
-        pass
-        
-            
+        self.canvas.create_text((x+0.5)*self.square, (y+0.5)*self.square, text = str(self.pattern[x][y][Minesweeper.element["MINE"]]), fill = 'black', font = ('Helvetica', 40))
+        if self.pattern[x][y][Minesweeper.element["CLICK"]] == Minesweeper.click["RIGHT"]:
+            self.canvas.delete('[{},{}]'.format(x,y))
+        self.pattern[x][y][Minesweeper.element["CLICK"]] = Minesweeper.click["LEFT"]
+        if self.pattern[x][y][Minesweeper.element["MINE"]] == 0:
+                for xx in range(-1, 2):
+                    if x+xx < 0 or x+xx >= self.col: continue
+                    for yy in range(-1, 2):
+                        if y+yy < 0 or y+yy >= self.row: continue
+                        if self.pattern[x+xx][y+yy][Minesweeper.element["CLICK"]] == Minesweeper.click["LEFT"]: continue
+                        self.detect_region(x+xx, y+yy)
+                
 
 
 if __name__ == '__main__':
